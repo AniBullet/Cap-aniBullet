@@ -1,25 +1,36 @@
 import { createWritableMemo } from "@solid-primitives/memo";
 import { TextInput } from "./TextInput";
 
-export const BACKGROUND_COLORS = [
-	"#FF0000", // Red
-	"#FF4500", // Orange-Red
-	"#FF8C00", // Orange
-	"#FFD700", // Gold
-	"#FFFF00", // Yellow
-	"#ADFF2F", // Green-Yellow
-	"#32CD32", // Lime Green
-	"#008000", // Green
-	"#00CED1", // Dark Turquoise
-	"#4785FF", // Dodger Blue
-	"#0000FF", // Blue
-	"#4B0082", // Indigo
-	"#800080", // Purple
-	"#A9A9A9", // Dark Gray
-	"#FFFFFF", // White
-	"#000000", // Black
-	"#00000000", // Transparent
-];
+export function getColorPreviewBorderColor(color: string) {
+	return `color-mix(in srgb, ${color} 82%, black)`;
+}
+
+export function rgbToHex(rgb: [number, number, number]) {
+	return `#${rgb
+		.map((c) => c.toString(16).padStart(2, "0"))
+		.join("")
+		.toUpperCase()}`;
+}
+
+export function hexToRgb(hex: string): [number, number, number, number] | null {
+	const match = hex.match(
+		/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i,
+	);
+	if (!match) return null;
+
+	const [, r, g, b, a] = match;
+	const rgb = [
+		Number.parseInt(r, 16),
+		Number.parseInt(g, 16),
+		Number.parseInt(b, 16),
+	] as const;
+
+	if (a) {
+		return [...rgb, Number.parseInt(a, 16)];
+	}
+
+	return [...rgb, 255];
+}
 
 export function RgbInput(props: {
 	value: [number, number, number];
@@ -27,6 +38,7 @@ export function RgbInput(props: {
 }) {
 	const [text, setText] = createWritableMemo(() => rgbToHex(props.value));
 	let prevHex = rgbToHex(props.value);
+
 	let colorInput!: HTMLInputElement;
 
 	const commitValue = (raw: string) => {
@@ -45,9 +57,12 @@ export function RgbInput(props: {
 		<div class="flex flex-row items-center gap-[0.75rem] relative">
 			<button
 				type="button"
-				class="size-[2rem] rounded-[0.5rem] border border-gray-4"
+				class="size-[2rem] rounded-[0.5rem]"
 				style={{
 					"background-color": rgbToHex(props.value),
+					"box-shadow": `inset 0 0 0 1px ${getColorPreviewBorderColor(
+						rgbToHex(props.value),
+					)}`,
 				}}
 				onClick={() => colorInput.click()}
 			/>
@@ -59,6 +74,7 @@ export function RgbInput(props: {
 				onChange={(e) => {
 					const value = hexToRgb(e.target.value);
 					if (!value) return;
+
 					const [r, g, b] = value;
 					props.onChange([r, g, b]);
 				}}
@@ -80,8 +96,10 @@ export function RgbInput(props: {
 				}}
 				onInput={(e) => {
 					setText(e.currentTarget.value);
+
 					const value = hexToRgb(e.currentTarget.value.trim());
 					if (!value) return;
+
 					const [r, g, b] = value;
 					props.onChange([r, g, b]);
 				}}
@@ -94,28 +112,4 @@ export function RgbInput(props: {
 			/>
 		</div>
 	);
-}
-
-export function rgbToHex(rgb: [number, number, number]) {
-	return `#${rgb
-		.map((c) => c.toString(16).padStart(2, "0"))
-		.join("")
-		.toUpperCase()}`;
-}
-
-export function hexToRgb(hex: string): [number, number, number, number] | null {
-	const match = hex.match(
-		/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i,
-	);
-	if (!match) return null;
-	const [, r, g, b, a] = match;
-	const rgb = [
-		Number.parseInt(r, 16),
-		Number.parseInt(g, 16),
-		Number.parseInt(b, 16),
-	] as const;
-	if (a) {
-		return [...rgb, Number.parseInt(a, 16)];
-	}
-	return [...rgb, 255];
 }
